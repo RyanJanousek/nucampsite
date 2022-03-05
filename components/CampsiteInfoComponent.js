@@ -1,18 +1,36 @@
-import React from "react";
+import React, { Component } from 'react';
 import { Text, View, ScrollView, FlatList } from 'react-native';
-import { Card } from 'react-native-elements';
-import { CAMPSITES } from '../shared/campsites'; 
-import { COMMENTS } from '../shared/comments';
+import { Card, Icon } from 'react-native-elements';
+import { connect } from 'react-redux';
+import { baseUrl }from '../shared/baseUrl';
 
-function RenderCampsite({campsite}){
+const mapStateToProps = state => {
+    return {
+        campsites:state.campsites,
+        comments: state.comments
+    };
+};
+
+function RenderCampsite(props) {
+
+    const { campsite } = props;
     if (campsite){
         return (
             <Card
                 featuredTitle={campsite.name}
-                image={require('./images/react-lake.jpg')}>
-                    <Text style={{margin:10}}>
+                image={{uri: baseUrl + campsite.image}}>
+                <Text style={{margin:10}}>
                         {campsite.description}
-                    </Text>
+                </Text>
+                    <Icon
+                        name={props.favorite ? 'heart' : 'heart-o'}
+                        type='font-awesome'
+                        color='#f50'
+                        raised
+                        reverse
+                        onPress={() => props.Favorite ? 
+                            console.log('Already set as a favorite'): props.markFavorite()}
+                    />
                 </Card>
         );
     }
@@ -36,7 +54,7 @@ function RenderComments({comments}) {
                     <FlatList 
                         data={comments}
                         renderItem={renderCommentItem}
-                        keyExtractor={item=> item.id.toString()}
+                        keyExtractor={item => item.id.toString()}
                     />
              </Card>
         )
@@ -46,9 +64,12 @@ class CampsiteInfo extends Component {
     constructor(props){
         super(props);
         this.state = {
-            partners: CAMPSITES,
-            comments: COMMENTS
+            favorite: false
         };
+    }
+
+    markFavorite(){
+        this.setState({favorite: true});
     }
 
     static navigationOptions = {
@@ -56,17 +77,19 @@ class CampsiteInfo extends Component {
 }
 
 render() {
-    const campsiteId = this.props.navigatiion.getParam('campsiteID');
-    const campsite = this.state.campsites.filter(campsite => campsite.id === campsiteId)[0];
-    const comments = this.state.comments.filter(comment => comment.campsiteId === campsiteId);
+    const campsiteId = this.props.navigation.getParam('campsiteId');
+    const campsite = this.props.campsites.campsites.filter(campsite => campsite.id === campsiteId)[0];
+    const comments = this.props.comments.comments.filter(comment => comment.campsiteId === campsiteId);
     return (
         <ScrollView>
-            <RenderCampsite campsite ={campsite} />
-            <RenderComments comments ={ comments} />
+            <RenderCampsite campsite ={campsite}
+                favorite={this.state.favorite}
+                markFavorite={() => this.markFavorite()}
+            />
         </ScrollView>
        );
     }   
-}
+ } 
 
 
-export default CampsiteInfo;
+export default connect(mapStateToProps)(CampsiteInfo);
